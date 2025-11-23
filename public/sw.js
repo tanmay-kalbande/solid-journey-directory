@@ -1,5 +1,5 @@
 // Service Worker for Jawala Business Directory
-const CACHE_VERSION = '1.0.6';
+const CACHE_VERSION = '1.0.7'; // 👈 ONLY CHANGE THIS TO TRIGGER UPDATE
 const CACHE_NAME = `jawala-business-v${CACHE_VERSION}`;
 const RUNTIME_CACHE = `jawala-runtime-v${CACHE_VERSION}`;
 
@@ -8,7 +8,8 @@ const PRECACHE_ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
-  'https://cdn.tailwindcss.com/3.4.17',
+  '/jdlogo.png',
+  // ❌ REMOVED CDN Tailwind - now it's bundled
   'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css',
   'https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Sans+Devanagari:wght@400;600;700&display=swap'
 ];
@@ -22,7 +23,10 @@ self.addEventListener('install', (event) => {
         console.log('📦 Caching app shell');
         return cache.addAll(PRECACHE_ASSETS);
       })
-      .then(() => self.skipWaiting())
+      .then(() => {
+        console.log('✅ Service Worker installed, waiting for activation');
+        return self.skipWaiting(); // Activate immediately
+      })
       .catch((error) => {
         console.error('❌ Cache failed:', error);
       })
@@ -49,12 +53,12 @@ self.addEventListener('activate', (event) => {
       );
     }).then(() => {
       console.log(`✨ Cache cleanup complete. Active caches: ${CACHE_NAME}, ${RUNTIME_CACHE}`);
-      return self.clients.claim();
+      return self.clients.claim(); // Take control immediately
     })
   );
 });
 
-// Fetch event - network first, fallback to cache
+// Fetch event - Cache-first strategy
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
@@ -67,10 +71,10 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Network-first strategy for API and dynamic content
+  // Network-first for API and dynamic JS bundles
   if (url.pathname.startsWith('/api/') || 
-      url.pathname.includes('assets/index-') ||
-      url.pathname.includes('assets/cacheService-')) {
+      url.pathname.includes('assets/') ||
+      url.searchParams.has('import')) {
     event.respondWith(
       fetch(request)
         .then((response) => {
