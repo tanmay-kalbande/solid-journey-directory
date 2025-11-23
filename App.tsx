@@ -23,6 +23,38 @@ const formatPhoneNumber = (phoneNumber: string): string => {
     return phoneNumber;
 };
 
+// --- UPDATE POPUP COMPONENT ---
+const UpdatePopup: React.FC<{ onUpdate: () => void }> = ({ onUpdate }) => (
+    <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-4 animate-fadeInUp backdrop-blur-sm bg-black/40">
+        <div className="bg-surface w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden border border-white/20">
+            <div className="bg-gradient-to-r from-primary to-secondary p-4 flex items-center gap-3">
+                <div className="bg-white/20 p-2 rounded-full">
+                    <i className="fas fa-rocket text-white text-xl"></i>
+                </div>
+                <div>
+                    <h3 className="text-white font-bold text-lg">नवीन अपडेट आले!</h3>
+                    <p className="text-white/90 text-xs">New update available</p>
+                </div>
+            </div>
+            <div className="p-5">
+                <p className="text-text-primary font-medium mb-2">
+                    आपलं डिजिटल गाव अजून स्मार्ट झालंय!
+                </p>
+                <p className="text-text-secondary text-sm mb-6">
+                    नवीन फीचर्स आणि सुधारणा पाहण्यासाठी कृपया ॲप अपडेट करा.
+                </p>
+                <button
+                    onClick={onUpdate}
+                    className="w-full py-3 bg-primary text-white font-bold rounded-xl shadow-lg hover:bg-primary-dark transition-all flex items-center justify-center gap-2 active:scale-95"
+                >
+                    <i className="fas fa-sync-alt fa-spin-hover"></i>
+                    आत्ताच अपडेट करा
+                </button>
+            </div>
+        </div>
+    </div>
+);
+
 // --- CORE COMPONENTS ---
 const Header: React.FC = () => {
     const handleShareApp = async () => {
@@ -76,6 +108,13 @@ const Header: React.FC = () => {
 };
 
 // --- AI Assistant Components ---
+// ... (AiAssistant code remains exactly the same, omitted for brevity) ...
+// Assume AiAssistant, BusinessDetailModal, etc. are here as they were
+
+// --- KEEPING PREVIOUS COMPONENTS FOR CONTEXT ---
+// (Paste the previous AiAssistant code here if you are overwriting the file completely, 
+// otherwise just assume it exists as per your previous file)
+
 interface AiResult {
     summary: string;
     results: Array<{
@@ -378,7 +417,7 @@ const AiAssistant: React.FC<{
     );
 };
 
-// --- ADVANCED FEATURE COMPONENTS ---
+// ... (BusinessDetailModal, Footer, LoginModal, AdminDashboard, EditBusinessList, BusinessForm remain the same) ...
 const BusinessDetailModal: React.FC<{
     business: Business | null;
     onClose: () => void;
@@ -641,7 +680,6 @@ const Footer: React.FC<{ onAdminLoginClick: () => void }> = ({ onAdminLoginClick
     );
 };
 
-// --- ADMIN COMPONENTS ---
 const LoginModal: React.FC<{ onLoginSuccess: (user: User) => void, onClose: () => void }> = ({ onLoginSuccess, onClose }) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -1102,6 +1140,45 @@ const App: React.FC = () => {
     const [isSaving, setIsSaving] = useState(false);
 
     const [installPromptEvent, setInstallPromptEvent] = useState<any>(null);
+    
+    // Service Worker State
+    const [showUpdatePopup, setShowUpdatePopup] = useState(false);
+    const [waitingWorker, setWaitingWorker] = useState<ServiceWorker | null>(null);
+
+    useEffect(() => {
+        // Register Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js').then(registration => {
+                // Check if there is already a waiting worker
+                if (registration.waiting) {
+                    setWaitingWorker(registration.waiting);
+                    setShowUpdatePopup(true);
+                }
+
+                // Listen for new workers
+                registration.addEventListener('updatefound', () => {
+                    const newWorker = registration.installing;
+                    if (newWorker) {
+                        newWorker.addEventListener('statechange', () => {
+                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                // New update installed
+                                setWaitingWorker(newWorker);
+                                setShowUpdatePopup(true);
+                            }
+                        });
+                    }
+                });
+            });
+        }
+    }, []);
+
+    const handleUpdateApp = () => {
+        if (waitingWorker) {
+            waitingWorker.postMessage({ type: 'SKIP_WAITING' });
+            setShowUpdatePopup(false);
+            window.location.reload();
+        }
+    };
 
     useEffect(() => {
         const loadData = async () => {
@@ -1408,6 +1485,8 @@ const App: React.FC = () => {
             <BusinessDetailModal business={viewedBusiness} onClose={() => setViewedBusiness(null)} />
 
             {showUserNamePopup && <UserNamePopup onSave={handleSaveUserName} />}
+
+            {showUpdatePopup && <UpdatePopup onUpdate={handleUpdateApp} />}
 
             {showLogin && <LoginModal onLoginSuccess={handleLoginSuccess} onClose={() => setShowLogin(false)} />}
 
