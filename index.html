@@ -53,52 +53,18 @@
     }
     </script>
     
-    <!-- CSS is now imported via index.tsx -->
-
-    <!-- Service Worker Registration -->
+    <!-- Install prompt listener -->
     <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js')
-            .then((registration) => {
-              console.log('✅ Service Worker registered:', registration.scope);
-              
-              // Check for updates
-              registration.addEventListener('updatefound', () => {
-                const newWorker = registration.installing;
-                newWorker.addEventListener('statechange', () => {
-                  if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                    // New version available
-                    if (confirm('नवीन आवृत्ती उपलब्ध आहे. अपडेट करायचे?')) {
-                      newWorker.postMessage({ type: 'SKIP_WAITING' });
-                      window.location.reload();
-                    }
-                  }
-                });
-              });
-            })
-            .catch((error) => {
-              console.error('❌ Service Worker registration failed:', error);
-            });
-        });
-      }
-
-      // Install prompt
       let deferredPrompt;
       window.addEventListener('beforeinstallprompt', (e) => {
         e.preventDefault();
         deferredPrompt = e;
-        console.log('📱 PWA install prompt ready');
       });
 
-      // Function to trigger install (call this from your app)
       window.showInstallPrompt = () => {
         if (deferredPrompt) {
           deferredPrompt.prompt();
           deferredPrompt.userChoice.then((choiceResult) => {
-            if (choiceResult.outcome === 'accepted') {
-              console.log('✅ PWA installed');
-            }
             deferredPrompt = null;
           });
         }
@@ -115,7 +81,6 @@
     </div>
     
     <script>
-      // Online/Offline indicator
       function updateOnlineStatus() {
         const indicator = document.getElementById('offline-indicator');
         if (!navigator.onLine) {
@@ -124,7 +89,6 @@
           indicator.style.display = 'none';
         }
       }
-      
       window.addEventListener('online', updateOnlineStatus);
       window.addEventListener('offline', updateOnlineStatus);
       updateOnlineStatus();
