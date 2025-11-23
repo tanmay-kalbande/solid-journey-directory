@@ -1,5 +1,5 @@
 // Service Worker for Jawala Business Directory
-const CACHE_VERSION = '1.0.7'; // 👈 ONLY CHANGE THIS TO TRIGGER UPDATE
+const CACHE_VERSION = '1.0.8'; // 👈 ONLY CHANGE THIS TO TRIGGER UPDATE
 const CACHE_NAME = `jawala-business-v${CACHE_VERSION}`;
 const RUNTIME_CACHE = `jawala-runtime-v${CACHE_VERSION}`;
 
