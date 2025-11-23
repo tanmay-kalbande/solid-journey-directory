@@ -1,6 +1,9 @@
-/* Global Styles for Jawala Business Directory */
+/* ADD THESE 3 LINES AT THE VERY TOP */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-/* Reset and base styles */
+/* Then keep all your existing CSS below... */
 * {
   box-sizing: border-box;
   margin: 0;
